@@ -305,9 +305,8 @@ class ApproveTransactionReview extends PureComponent {
     const {
       transaction: { origin, to, data, from },
       tokenList,
-      selectedAddress
     } = this.props;
-    const { AssetsContractController, TokenBalancesController } = Engine.context;
+    const { AssetsContractController } = Engine.context;
 
     let host;
 
@@ -322,8 +321,7 @@ class ApproveTransactionReview extends PureComponent {
     const { spenderAddress, encodedAmount } = decodeApproveData(data);
     const encodedValue = hexToBN(encodedAmount).toString();
 
-    let tokenSymbol, tokenDecimals, tokenName, tokenStandard, tokenBalance;
-
+    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
     const contract = tokenList[safeToChecksumAddress(to)];
     if (!contract) {
       try {
@@ -373,8 +371,6 @@ class ApproveTransactionReview extends PureComponent {
           tokenName,
           tokenValue: encodedValue,
           tokenStandard,
-          tokenId: encodedValue,
-          tokenBalance
         },
         spenderAddress,
         encodedAmount,
@@ -650,7 +646,10 @@ class ApproveTransactionReview extends PureComponent {
       fetchingUpdateDone,
     } = this.state;
     const {
+      accounts,
+      selectedAddress,
       primaryCurrency,
+      tokenBalances,
       gasError,
       activeTabUrl,
       transaction: { origin, from },
@@ -677,8 +676,6 @@ class ApproveTransactionReview extends PureComponent {
     const styles = this.getStyles();
     const isTestNetwork = isTestNet(network);
 
-    const tokenBalance = renderFromTokenMinimalUnit(token?.tokenBalance, token?.decimals);
-
     const originIsDeeplink =
       origin === ORIGIN_DEEPLINK || origin === ORIGIN_QR_CODE;
     const errorPress = isTestNetwork ? this.goToFaucet : this.buyEth;
@@ -701,7 +698,6 @@ class ApproveTransactionReview extends PureComponent {
       tokenName || tokenSymbol || strings(`spend_limit_edition.nft`)
     } (#${tokenValue})`;
 
- 
     return (
       <>
         <View style={styles.section} testID={'approve-modal-test-id'}>
@@ -832,7 +828,7 @@ class ApproveTransactionReview extends PureComponent {
                         multiLayerL1FeeTotal={multiLayerL1FeeTotal}
                       />
                   ) : (
-                    <CustomSpendCap ticker={tokenSymbol} dappProposedValue={originalApproveAmount} accountBalance={tokenBalance} domain={host} onInputChanged={(val) => console.log(val, 'val')} />
+                    <CustomSpendCap ticker={tokenSymbol} dappProposedValue={originalApproveAmount} accountBalance={confirmBalance} domain={host} onInputChanged={(val) => console.log(val, 'val')} />
                   )}
                     <TransactionReview
                       gasSelected={gasSelected}
