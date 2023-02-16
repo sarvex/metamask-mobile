@@ -308,7 +308,7 @@ class ApproveTransactionReview extends PureComponent {
       transaction: { origin, to, data, from },
       tokenList,
     } = this.props;
-    const { AssetsContractController } = Engine.context;
+    const { AssetsContractController, TokenBalancesController } = Engine.context;
 
     let host;
 
@@ -319,11 +319,14 @@ class ApproveTransactionReview extends PureComponent {
     } else {
       host = getHost(origin);
     }
-
+    
+    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
+   
     const { spenderAddress, encodedAmount } = decodeApproveData(data);
     const encodedValue = hexToBN(encodedAmount).toString();
 
-    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
+    let tokenBalance = await TokenBalancesController.getERC20BalanceOf(to, from)
+    
 
     const contract = tokenList[safeToChecksumAddress(to)];
     if (!contract) {
@@ -333,7 +336,6 @@ class ApproveTransactionReview extends PureComponent {
           from,
           encodedValue,
         );
-
         if (standard === ERC721 || standard === ERC1155) {
           tokenName = name;
           tokenSymbol = symbol;
@@ -345,6 +347,8 @@ class ApproveTransactionReview extends PureComponent {
           tokenDecimals = decimals;
           tokenSymbol = symbol;
           tokenStandard = standard;
+          tokenName = name;
+          tokenBalance = renderFromTokenMinimalUnit(tokenBalance, decimals);
         }
       } catch (e) {
         tokenSymbol = 'ERC20 Token';
@@ -644,10 +648,11 @@ class ApproveTransactionReview extends PureComponent {
     const {
       originalApproveAmount,
       customSpendAmount,
-      token: { tokenStandard, tokenSymbol, tokenName, tokenValue },
       host,
       spenderAddress,
       multiLayerL1FeeTotal,
+      token: { tokenStandard, tokenSymbol, tokenName, tokenValue, tokenBalance },
+      customSpendValue,
       fetchingUpdateDone,
       spendLimitCreated,
     } = this.state;
@@ -811,28 +816,43 @@ class ApproveTransactionReview extends PureComponent {
                     'contract_allowance.token_allowance.verify_third_party_details',
                   )}
                 />
-                <View style={styles.paddingHorizontal}>
-                  <View style={styles.section}>
-                  {userEnteredCustomSpend ? (
-                        <TransactionReview
-                        gasSelected={gasSelected}
-                        primaryCurrency={primaryCurrency}
-                        hideTotal
-                        noMargin
-                        onEdit={this.edit}
-                        chainId={this.props.chainId}
-                        onUpdatingValuesStart={onUpdatingValuesStart}
-                        onUpdatingValuesEnd={onUpdatingValuesEnd}
-                        animateOnChange={animateOnChange}
-                        isAnimating={isAnimating}
-                        gasEstimationReady={gasEstimationReady}
-                        legacy={!showFeeMarket}
-                        gasObject={
-                          !showFeeMarket ? legacyGasObject : eip1559GasObject
+              <View style={styles.paddingHorizontal}>
+                <View style={styles.section}>
+                  {tokenStandard === ERC20 && (
+                      <CustomSpendCap
+                        ticker={tokenSymbol}
+                        dappProposedValue={originalApproveAmount}
+                        accountBalance={tokenBalance}
+                        domain={host}
+                        noEdit={spendLimitCreated}
+                        customValue={customSpendValue}
+                        goBackPress={this.goBackToSpendLimit}
+                        onInputChanged={(value) =>
+                          this.setState({ customSpendValue: value })
                         }
                       />
-                  ) : (
-                    <CustomSpendCap ticker={tokenSymbol} dappProposedValue={originalApproveAmount} accountBalance={confirmBalance} domain={host} onInputChanged={(val) => console.log(val, 'val')} />
+                  )}
+                  {(spendLimitCreated || tokenStandard !== ERC20) && (
+                    <TransactionReview
+                      gasSelected={gasSelected}
+                      primaryCurrency={primaryCurrency}
+                      hideTotal
+                      noMargin
+                      onEdit={this.edit}
+                      chainId={this.props.chainId}
+                      onUpdatingValuesStart={onUpdatingValuesStart}
+                      onUpdatingValuesEnd={onUpdatingValuesEnd}
+                      animateOnChange={animateOnChange}
+                      isAnimating={isAnimating}
+                      gasEstimationReady={gasEstimationReady}
+                      legacy={!showFeeMarket}
+                      gasObject={
+                        !showFeeMarket ? legacyGasObject : eip1559GasObject
+                      }
+                      updateTransactionState={updateTransactionState}
+                      onlyGas
+                      multiLayerL1FeeTotal={multiLayerL1FeeTotal}
+                    />
                   )}
 
                     <TransactionReview
