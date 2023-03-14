@@ -753,6 +753,7 @@ class ApproveTransactionReview extends PureComponent {
                   from={from}
                   tokenBalance={tokenBalance}
                   tokenSymbol={tokenSymbol}
+                  fetchingTokenBalance={fetchingUpdateDone}
                 />
               )}
                 <Text

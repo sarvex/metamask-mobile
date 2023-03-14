@@ -40,6 +40,7 @@ const ApproveTransactionHeader = ({
   currentEnsName,
   tokenBalance,
   tokenSymbol,
+  fetchingTokenBalance,
 }: ApproveTransactionHeaderI) => {
   const [accountInfo, setAccountInfo] = useState<AccountInfoI>({
     balance: 0,
@@ -184,6 +185,7 @@ const ApproveTransactionHeader = ({
           imageSource: networkImage,
         }}
         useBlockieIcon={useBlockieIcon}
+        fetchingTokenBalance={fetchingTokenBalance}
       />
     </View>
   );
