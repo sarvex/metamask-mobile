@@ -264,8 +264,8 @@ class ApproveTransactionReview extends PureComponent {
     spenderAddress: '0x...',
     transaction: this.props.transaction,
     token: {},
-    spendLimitCreated: false,
-    customSpendValue: null,
+    spendCapCreated: false,
+    tokenSpendValue: null,
     showGasTooltip: false,
     gasTransactionObject: {},
     multiLayerL1FeeTotal: '0x0',
@@ -324,12 +324,12 @@ class ApproveTransactionReview extends PureComponent {
       host = getHost(origin);
     }
 
-    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
+    let tokenSymbol, tokenDecimals, tokenName, tokenStandard, tokenBalance;
 
     const { spenderAddress, encodedAmount } = decodeApproveData(data);
     const encodedValue = hexToBN(encodedAmount).toString();
 
-    let tokenBalance = await TokenBalancesController.getERC20BalanceOf(
+    const erc20TokenBalance = await TokenBalancesController.getERC20BalanceOf(
       to,
       from,
     );
@@ -355,7 +355,10 @@ class ApproveTransactionReview extends PureComponent {
           tokenSymbol = symbol;
           tokenStandard = standard;
           tokenName = name;
-          tokenBalance = renderFromTokenMinimalUnit(tokenBalance, decimals);
+          tokenBalance = renderFromTokenMinimalUnit(
+            erc20TokenBalance,
+            decimals,
+          );
         }
       } catch (e) {
         tokenSymbol = 'ERC20 Token';
@@ -652,6 +655,8 @@ class ApproveTransactionReview extends PureComponent {
     return createStyles(colors);
   };
 
+  goToSpendCap = () => this.setState({ spendCapCreated: false });
+
   renderDetails = () => {
     const {
       originalApproveAmount,
@@ -664,9 +669,9 @@ class ApproveTransactionReview extends PureComponent {
         tokenValue,
         tokenBalance,
       },
-      customSpendValue,
+      tokenSpendValue,
       fetchingUpdateDone,
-      spendLimitCreated,
+      spendCapCreated,
     } = this.state;
 
     const {
@@ -730,14 +735,14 @@ class ApproveTransactionReview extends PureComponent {
               confirmButtonMode="confirm"
               cancelText={strings('transaction.reject')}
               confirmText={
-                tokenStandard === ERC20 && !spendLimitCreated
+                tokenStandard === ERC20 && !spendCapCreated
                   ? strings('transaction.next')
                   : strings('transactions.approve')
               }
               onCancelPress={this.onCancelPress}
               onConfirmPress={this.onConfirmPress}
               confirmDisabled={
-                !customSpendValue || Boolean(gasError) || transactionConfirmed
+                !tokenSpendValue || Boolean(gasError) || transactionConfirmed
               }
             >
               <View>
@@ -759,7 +764,7 @@ class ApproveTransactionReview extends PureComponent {
                     `spend_limit_edition.${
                       originIsDeeplink
                         ? 'allow_to_address_access'
-                        : spendLimitCreated
+                        : spendCapCreated
                         ? 'review_spend_cap'
                         : 'set_spend_cap'
                     }`,
@@ -852,69 +857,47 @@ class ApproveTransactionReview extends PureComponent {
                 />
                 <View style={styles.paddingHorizontal}>
                   <View style={styles.section}>
-                    {tokenStandard === undefined ? (
+                    {!tokenStandard ? (
                       <SkeletonText style={styles.skeletalView} />
-                    ) : tokenStandard === ERC20 ? (
-                      <>
+                    ) : (
+                      tokenStandard === ERC20 && (
                         <CustomSpendCap
                           ticker={tokenSymbol}
                           dappProposedValue={originalApproveAmount}
                           accountBalance={tokenBalance}
                           domain={host}
-                          disableEdit={spendLimitCreated}
-                          editValue={this.goBackToSpendLimit}
+                          disableEdit={spendCapCreated}
+                          editValue={this.goToSpendCap}
                           onInputChanged={(value) =>
-                            this.setState({ customSpendValue: value })
+                            this.setState({ tokenSpendValue: value })
                           }
                         />
-                        {spendLimitCreated && (
-                          <View style={styles.transactionWrapper}>
-                            <TransactionReview
-                              gasSelected={gasSelected}
-                              primaryCurrency={primaryCurrency}
-                              hideTotal
-                              noMargin
-                              onEdit={this.edit}
-                              chainId={this.props.chainId}
-                              onUpdatingValuesStart={onUpdatingValuesStart}
-                              onUpdatingValuesEnd={onUpdatingValuesEnd}
-                              animateOnChange={animateOnChange}
-                              isAnimating={isAnimating}
-                              gasEstimationReady={gasEstimationReady}
-                              legacy={!showFeeMarket}
-                              gasObject={
-                                !showFeeMarket
-                                  ? legacyGasObject
-                                  : eip1559GasObject
-                              }
-                              updateTransactionState={updateTransactionState}
-                              onlyGas
-                              multiLayerL1FeeTotal={multiLayerL1FeeTotal}
-                            />
-                          </View>
-                        )}
-                      </>
-                    ) : (
-                      <TransactionReview
-                        gasSelected={gasSelected}
-                        primaryCurrency={primaryCurrency}
-                        hideTotal
-                        noMargin
-                        onEdit={this.edit}
-                        chainId={this.props.chainId}
-                        onUpdatingValuesStart={onUpdatingValuesStart}
-                        onUpdatingValuesEnd={onUpdatingValuesEnd}
-                        animateOnChange={animateOnChange}
-                        isAnimating={isAnimating}
-                        gasEstimationReady={gasEstimationReady}
-                        legacy={!showFeeMarket}
-                        gasObject={
-                          !showFeeMarket ? legacyGasObject : eip1559GasObject
-                        }
-                        updateTransactionState={updateTransactionState}
-                        onlyGas
-                        multiLayerL1FeeTotal={multiLayerL1FeeTotal}
-                      />
+                      )
+                    )}
+                    {((tokenStandard === ERC20 && spendCapCreated) ||
+                      !tokenStandard === ERC20) && (
+                      <View style={styles.transactionWrapper}>
+                        <TransactionReview
+                          gasSelected={gasSelected}
+                          primaryCurrency={primaryCurrency}
+                          hideTotal
+                          noMargin
+                          onEdit={this.edit}
+                          chainId={this.props.chainId}
+                          onUpdatingValuesStart={onUpdatingValuesStart}
+                          onUpdatingValuesEnd={onUpdatingValuesEnd}
+                          animateOnChange={animateOnChange}
+                          isAnimating={isAnimating}
+                          gasEstimationReady={gasEstimationReady}
+                          legacy={!showFeeMarket}
+                          gasObject={
+                            !showFeeMarket ? legacyGasObject : eip1559GasObject
+                          }
+                          updateTransactionState={updateTransactionState}
+                          onlyGas
+                          multiLayerL1FeeTotal={multiLayerL1FeeTotal}
+                        />
+                      </View>
                     )}
                     {gasError && (
                       <View style={styles.errorWrapper}>
@@ -1032,7 +1015,6 @@ class ApproveTransactionReview extends PureComponent {
       });
     };
 
-    // console.log('spenderAddress', to)
     const showNickname = (address) => {
       toggleModal(address);
     };
@@ -1107,16 +1089,16 @@ class ApproveTransactionReview extends PureComponent {
 
   onConfirmPress = () => {
     const {
-      spendLimitCreated,
+      spendCapCreated,
       token: { tokenStandard },
     } = this.state;
     const { onConfirm } = this.props;
 
-    if (tokenStandard === ERC20 && !spendLimitCreated) {
-      return this.setState({ spendLimitCreated: true });
+    if (tokenStandard === ERC20 && !spendCapCreated) {
+      return this.setState({ spendCapCreated: true });
     }
 
-    if (tokenStandard === ERC20 && spendLimitCreated) {
+    if (tokenStandard === ERC20 && spendCapCreated) {
       return onConfirm && onConfirm();
     }
 
@@ -1200,8 +1182,6 @@ const mapStateToProps = (state) => ({
   ).length,
   tokensLength: state.engine.backgroundState.TokensController.tokens.length,
   providerType: selectProviderType(state),
-  tokenBalances:
-    state.engine.backgroundState.TokenBalancesController.contractBalances,
   providerRpcTarget: selectRpcTarget(state),
   primaryCurrency: state.settings.primaryCurrency,
   activeTabUrl: getActiveTabUrl(state),
