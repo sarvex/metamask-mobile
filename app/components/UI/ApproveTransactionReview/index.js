@@ -57,7 +57,8 @@ import {
   isMultiLayerFeeNetwork,
   fetchEstimatedMultiLayerL1Fee,
 } from '../../../util/networks';
-import EditPermission from './EditPermission';
+import CustomSpendCap from '../../../component-library/components-temp/CustomSpendCap';
+import IonicIcon from 'react-native-vector-icons/Ionicons';
 import Logger from '../../../util/Logger';
 import InfoModal from '../Swaps/components/InfoModal';
 import ButtonLink from '../../../component-library/components/Buttons/Button/variants/ButtonLink';
@@ -259,10 +260,8 @@ class ApproveTransactionReview extends PureComponent {
 
   state = {
     viewData: false,
-    editPermissionVisible: false,
     host: undefined,
     originalApproveAmount: undefined,
-    spendLimitUnlimitedSelected: true,
     spendLimitCustomValue: undefined,
     ticker: getTicker(this.props.ticker),
     viewDetails: false,
@@ -530,41 +529,6 @@ class ApproveTransactionReview extends PureComponent {
     this.setState({ viewDetails: !viewDetails });
   };
 
-  toggleEditPermission = () => {
-    const { editPermissionVisible } = this.state;
-    !editPermissionVisible &&
-      this.trackApproveEvent(
-        MetaMetricsEvents.DAPP_APPROVE_SCREEN_EDIT_PERMISSION,
-      );
-    this.setState({ editPermissionVisible: !editPermissionVisible });
-  };
-
-  onPressSpendLimitUnlimitedSelected = () => {
-    const {
-      token: { tokenDecimals },
-    } = this.state;
-    const minTokenAllowance = minimumTokenAllowance(tokenDecimals);
-    this.setState({
-      spendLimitUnlimitedSelected: true,
-      spendLimitCustomValue: minTokenAllowance,
-    });
-  };
-
-  onPressSpendLimitCustomSelected = () => {
-    this.setState({ spendLimitUnlimitedSelected: false });
-    setTimeout(
-      () =>
-        this.customSpendLimitInput &&
-        this.customSpendLimitInput.current &&
-        this.customSpendLimitInput.current.focus(),
-      100,
-    );
-  };
-
-  onSpendLimitCustomValueChange = (value) => {
-    this.setState({ spendLimitCustomValue: value });
-  };
-
   copyContractAddress = async (address) => {
     await ClipboardManager.setString(address);
     this.props.showAlert({
@@ -583,52 +547,6 @@ class ApproveTransactionReview extends PureComponent {
     const { onModeChange } = this.props;
     Analytics.trackEvent(MetaMetricsEvents.TRANSACTIONS_EDIT_TRANSACTION);
     onModeChange && onModeChange('edit');
-  };
-
-  onEditPermissionSetAmount = () => {
-    const {
-      token: { tokenDecimals },
-      spenderAddress,
-      spendLimitUnlimitedSelected,
-      originalApproveAmount,
-      spendLimitCustomValue,
-      transaction,
-    } = this.state;
-
-    try {
-      const { setTransactionObject } = this.props;
-      const newApprovalTransaction = generateTxWithNewTokenAllowance(
-        spendLimitUnlimitedSelected
-          ? originalApproveAmount
-          : spendLimitCustomValue,
-        tokenDecimals,
-        spenderAddress,
-        transaction,
-      );
-
-      const { encodedAmount } = decodeApproveData(newApprovalTransaction.data);
-
-      const approveAmount = fromTokenMinimalUnit(
-        hexToBN(encodedAmount),
-        tokenDecimals,
-      );
-
-      this.setState({ customSpendAmount: approveAmount });
-      setTransactionObject({
-        ...newApprovalTransaction,
-        transaction: {
-          ...newApprovalTransaction.transaction,
-          data: newApprovalTransaction.data,
-        },
-      });
-    } catch (err) {
-      Logger.log('Failed to setTransactionObject', err);
-    }
-    this.toggleEditPermission();
-    AnalyticsV2.trackEvent(
-      MetaMetricsEvents.APPROVAL_PERMISSION_UPDATED,
-      this.getAnalyticsParams(),
-    );
   };
 
   openLinkAboutGas = () =>
@@ -667,35 +585,6 @@ class ApproveTransactionReview extends PureComponent {
             </TouchableOpacity>
           </View>
         }
-      />
-    );
-  };
-
-  renderEditPermission = () => {
-    const {
-      host,
-      spendLimitUnlimitedSelected,
-      spendLimitCustomValue,
-      originalApproveAmount,
-      token: { tokenSymbol, tokenDecimals },
-    } = this.state;
-    const minimumSpendLimit = minimumTokenAllowance(tokenDecimals);
-
-    return (
-      <EditPermission
-        host={host}
-        minimumSpendLimit={minimumSpendLimit}
-        spendLimitUnlimitedSelected={spendLimitUnlimitedSelected}
-        tokenSymbol={tokenSymbol}
-        spendLimitCustomValue={spendLimitCustomValue}
-        originalApproveAmount={originalApproveAmount}
-        onSetApprovalAmount={this.onEditPermissionSetAmount}
-        onSpendLimitCustomValueChange={this.onSpendLimitCustomValueChange}
-        onPressSpendLimitUnlimitedSelected={
-          this.onPressSpendLimitUnlimitedSelected
-        }
-        onPressSpendLimitCustomSelected={this.onPressSpendLimitCustomSelected}
-        toggleEditPermission={this.toggleEditPermission}
       />
     );
   };
@@ -1138,6 +1027,10 @@ class ApproveTransactionReview extends PureComponent {
     const { onConfirm } = this.props;
 
     if (tokenStandard === ERC20 && !spendCapCreated) {
+      trackEvent(
+        MetaMetricsEvents.APPROVAL_PERMISSION_UPDATED,
+        this.getAnalyticsParams(),
+      );
       return this.setState({ spendCapCreated: true });
     }
 
@@ -1189,8 +1082,7 @@ class ApproveTransactionReview extends PureComponent {
   }
 
   render = () => {
-    const { viewDetails, editPermissionVisible, showBlockExplorerModal } =
-      this.state;
+    const { viewDetails, showBlockExplorerModal } = this.state;
     const { isSigningQRObject, shouldVerifyContractDetails } = this.props;
 
     return (
@@ -1201,8 +1093,6 @@ class ApproveTransactionReview extends PureComponent {
           ? this.renderVerifyContractDetails()
           : showBlockExplorerModal
           ? this.renderBlockExplorerView()
-          : editPermissionVisible
-          ? this.renderEditPermission()
           : isSigningQRObject
           ? this.renderQRDetails()
           : this.renderDetails()}
