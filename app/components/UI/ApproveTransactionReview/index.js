@@ -667,6 +667,10 @@ class ApproveTransactionReview extends PureComponent {
     const tokenLabel = `${
       tokenName || tokenSymbol || strings(`spend_limit_edition.nft`)
     } (#${tokenValue})`;
+    const shouldDisableConfirmButton =
+      (!fetchingUpdateDone && !tokenSpendValue) ||
+      Boolean(gasError) ||
+      transactionConfirmed;
 
     return (
       <>
@@ -682,11 +686,7 @@ class ApproveTransactionReview extends PureComponent {
               }
               onCancelPress={this.onCancelPress}
               onConfirmPress={this.onConfirmPress}
-              confirmDisabled={
-                (!fetchingUpdateDone && !tokenSpendValue) ||
-                Boolean(gasError) ||
-                transactionConfirmed
-              }
+              confirmDisabled={shouldDisableConfirmButton}
             >
               <View>
               {from && (
