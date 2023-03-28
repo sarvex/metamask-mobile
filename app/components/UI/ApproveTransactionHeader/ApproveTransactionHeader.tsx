@@ -122,7 +122,7 @@ const ApproveTransactionHeader = ({
         origin.split(AppConstants.MM_SDK.SDK_REMOTE_ORIGIN)[1],
       ).origin;
     } else {
-      title = getUrlObj(currentEnsName || url || origin).origin;
+      title = getUrlObj(currentEnsName || origin || url).origin;
     }
 
     return title;
@@ -130,14 +130,14 @@ const ApproveTransactionHeader = ({
 
   const favIconUrl = useMemo(() => {
     const { isOriginWalletConnect, isOriginMMSDKRemoteConn } = origins;
-    let newUrl = url;
+    let newUrl = origin;
     if (isOriginWalletConnect) {
       newUrl = origin.split(WALLET_CONNECT_ORIGIN)[1];
     } else if (isOriginMMSDKRemoteConn) {
       newUrl = origin.split(AppConstants.MM_SDK.SDK_REMOTE_ORIGIN)[1];
     }
     return FAV_ICON_URL(getHost(newUrl));
-  }, [origin, origins, url]);
+  }, [origin, origins]);
 
   return (
     <View style={styles.transactionHeader}>
