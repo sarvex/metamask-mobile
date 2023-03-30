@@ -85,19 +85,9 @@ const ApproveTransactionHeader = ({
       ? hexToBN(accounts[activeAddress].balance)
       : 0;
 
-    let balance;
-    if (tokenBalance) {
-      balance = tokenBalance;
-    } else {
-      balance = Number(renderFromWei(weiBalance));
-    }
+    const balance = tokenBalance || Number(renderFromWei(weiBalance));
+    const currency = tokenSymbol || getTicker(ticker);
 
-    let currency;
-    if (tokenSymbol) {
-      currency = tokenSymbol;
-    } else {
-      currency = getTicker(ticker);
-    }
     const accountName = activeAddress
       ? renderAccountName(activeAddress, identities)
       : '';

@@ -669,7 +669,7 @@ class ApproveTransactionReview extends PureComponent {
     } (#${tokenValue})`;
     const shouldDisableConfirmButton =
       !fetchingUpdateDone ||
-      !tokenSpendValue ||
+      (tokenStandard === ERC20 && !tokenSpendValue) ||
       Boolean(gasError) ||
       transactionConfirmed;
 
@@ -1040,10 +1040,6 @@ class ApproveTransactionReview extends PureComponent {
         this.getAnalyticsParams(),
       );
       return this.setState({ spendCapCreated: true });
-    }
-
-    if (tokenStandard === ERC20 && spendCapCreated) {
-      return onConfirm && onConfirm();
     }
 
     return onConfirm && onConfirm();
