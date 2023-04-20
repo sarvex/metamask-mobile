@@ -70,8 +70,6 @@ import { ThemeContext, mockTheme } from '../../../util/theme';
 import withQRHardwareAwareness from '../QRHardware/withQRHardwareAwareness';
 import QRSigningDetails from '../QRHardware/QRSigningDetails';
 import Routes from '../../../constants/navigation/Routes';
-import formatNumber from '../../../util/formatNumber';
-import { allowedToBuy } from '../FiatOnRampAggregator';
 import createStyles from './styles';
 import {
   selectChainId,
@@ -88,9 +86,6 @@ import VerifyContractDetails from './VerifyContractDetails/VerifyContractDetails
 import ShowBlockExplorer from './ShowBlockExplorer';
 import { isNetworkBuyNativeTokenSupported } from '../FiatOnRampAggregator/utils';
 import { getRampNetworks } from '../../../reducers/fiatOrders';
-import CustomSpendCap from '../../../component-library/components-temp/CustomSpendCap';
-import {getAccountBalance} from '../../../util/dappTransactions';
-
 import SkeletonText from '../FiatOnRampAggregator/components/SkeletonText';
 
 const { ORIGIN_DEEPLINK, ORIGIN_QR_CODE } = AppConstants.DEEPLINKS;
@@ -1113,7 +1108,6 @@ const mapStateToProps = (state) => ({
     selectChainId(state),
     getRampNetworks(state),
   ),
-  tokenBalances: state.engine.backgroundState.TokenBalancesController.contractBalances,
 });
 
 const mapDispatchToProps = (dispatch) => ({
