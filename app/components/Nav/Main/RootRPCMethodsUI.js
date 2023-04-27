@@ -39,10 +39,6 @@ import AccountApproval from '../../UI/AccountApproval';
 import TransactionTypes from '../../../core/TransactionTypes';
 import AddCustomNetwork from '../../UI/AddCustomNetwork';
 import SwitchCustomNetwork from '../../UI/SwitchCustomNetwork';
-import {
-  toggleDappTransactionModal,
-  toggleApproveModal,
-} from '../../../actions/modals';
 import { swapsUtils } from '@metamask/swaps-controller';
 import { query } from '@metamask/controller-utils';
 import Analytics from '../../../core/Analytics/Analytics';
@@ -77,6 +73,7 @@ const RootRPCMethodsUI = (props) => {
   const [showPendingApproval, setShowPendingApproval] = useState(false);
   const [signMessageParams, setSignMessageParams] = useState({ data: '' });
   const [signType, setSignType] = useState(false);
+  const [transactionType, setTransactionType] = useState(false);
   const [walletConnectRequestInfo, setWalletConnectRequestInfo] =
     useState(undefined);
   const [showExpandedMessage, setShowExpandedMessage] = useState(false);
@@ -93,8 +90,6 @@ const RootRPCMethodsUI = (props) => {
   const [suggestedAssetMeta, setSuggestedAssetMeta] = useState(undefined);
 
   const setTransactionObject = props.setTransactionObject;
-  const toggleApproveModal = props.toggleApproveModal;
-  const toggleDappTransactionModal = props.toggleDappTransactionModal;
   const setEtherTransaction = props.setEtherTransaction;
 
   // Reject pending approval using MetaMask SDK.
@@ -376,9 +371,9 @@ const RootRPCMethodsUI = (props) => {
           data.substr(0, 10) === APPROVE_FUNCTION_SIGNATURE &&
           (!value || isZeroValue(value))
         ) {
-          toggleApproveModal();
+          setTransactionType('transaction');
         } else {
-          toggleDappTransactionModal();
+          setTransactionType('dapp');
         }
       }
     },
@@ -387,8 +382,6 @@ const RootRPCMethodsUI = (props) => {
       props.chainId,
       setEtherTransaction,
       setTransactionObject,
-      toggleApproveModal,
-      toggleDappTransactionModal,
       autoSign,
       tokenList,
     ],
@@ -519,19 +512,35 @@ const RootRPCMethodsUI = (props) => {
     );
   };
 
-  const renderDappTransactionModal = () =>
-    props.dappTransactionModalVisible && (
-      <Approval
-        navigation={props.navigation}
-        dappTransactionModalVisible
-        toggleDappTransactionModal={props.toggleDappTransactionModal}
-      />
-    );
+  const isTransactionApprovalVisible = () =>
+    showPendingApproval?.type === ApprovalTypes.TRANSACTION;
 
-  const renderApproveModal = () =>
-    props.approveModalVisible && (
-      <Approve modalVisible toggleApproveModal={props.toggleApproveModal} />
+  const renderDappTransactionModal = () => {
+    const transactionApprovalVisible = isTransactionApprovalVisible();
+    return (
+      transactionApprovalVisible &&
+      transactionType === 'dapp' && (
+        <Approval
+          navigation={props.navigation}
+          dappTransactionModalVisible={transactionApprovalVisible}
+          setShowTransactionApproval={setShowPendingApproval}
+        />
+      )
     );
+  };
+
+  const renderApproveModal = () => {
+    const transactionApprovalVisible = isTransactionApprovalVisible();
+    return (
+      transactionApprovalVisible &&
+      transactionType === 'transaction' && (
+        <Approve
+          modalVisible={transactionApprovalVisible}
+          setShowTransactionApproval={setShowPendingApproval}
+        />
+      )
+    );
+  };
 
   const onAddCustomNetworkReject = () => {
     setShowPendingApproval(false);
@@ -662,7 +671,7 @@ const RootRPCMethodsUI = (props) => {
   );
 
   /**
-   * On rejection addinga an asset
+   * On rejection adding an asset
    */
   const onCancelWatchAsset = () => {
     setWatchAsset(false);
@@ -716,7 +725,7 @@ const RootRPCMethodsUI = (props) => {
       const key = Object.keys(approval.pendingApprovals)[0];
       const request = approval.pendingApprovals[key];
       const requestData = request.requestData;
-      if (requestData.pageMeta) {
+      if (requestData?.pageMeta) {
         setCurrentPageMeta(requestData.pageMeta);
       }
 
@@ -767,6 +776,13 @@ const RootRPCMethodsUI = (props) => {
           setWalletConnectRequestInfo({ data: requestData, id: request.id });
           showPendingApprovalModal({
             type: ApprovalTypes.WALLET_CONNECT,
+            origin: request.origin,
+          });
+          break;
+        case ApprovalTypes.TRANSACTION:
+          // await onUnapprovedTransaction(requestData);
+          showPendingApprovalModal({
+            type: ApprovalTypes.TRANSACTION,
             origin: request.origin,
           });
           break;
@@ -855,14 +871,6 @@ RootRPCMethodsUI.propTypes = {
    */
   tokens: PropTypes.array,
   /**
-  /* Hides or shows dApp transaction modal
-  */
-  toggleDappTransactionModal: PropTypes.func,
-  /**
-  /* Hides or shows approve modal
-  */
-  toggleApproveModal: PropTypes.func,
-  /**
   /* dApp transaction modal visible or not
   */
   dappTransactionModalVisible: PropTypes.bool,
@@ -907,9 +915,6 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(setEtherTransaction(transaction)),
   setTransactionObject: (transaction) =>
     dispatch(setTransactionObject(transaction)),
-  toggleDappTransactionModal: (show = null) =>
-    dispatch(toggleDappTransactionModal(show)),
-  toggleApproveModal: (show) => dispatch(toggleApproveModal(show)),
   networkSwitched: ({ networkUrl, networkStatus }) =>
     dispatch(networkSwitched({ networkUrl, networkStatus })),
 });
