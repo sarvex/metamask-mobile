@@ -83,3 +83,6 @@ export const TURN_OFF_REMEMBER_ME_MODAL = 'TurnOffRememberMeConfirm';
 export const PROTECT_YOUR_ACCOUNT_SCREEN = 'protect-your-account-screen';
 export const MANUAL_BACKUP_STEP_2_CONTINUE_BUTTON =
   'manual-backup-step-2-continue-button';
+
+export const TXN_CONFIRM_SCREEN = 'txn-confirm-screen';
+export const TXN_CONFIRM_SEND_BUTTON = 'txn-confirm-send-button';
