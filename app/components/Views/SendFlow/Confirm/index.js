@@ -225,7 +225,6 @@ class Confirm extends PureComponent {
     errorMessage: undefined,
     mode: REVIEW,
     gasSelected: AppConstants.GAS_OPTIONS.MEDIUM,
-    gasSelectedTemp: AppConstants.GAS_OPTIONS.MEDIUM,
     stopUpdateGas: false,
     advancedGasInserted: false,
     EIP1559GasTransaction: {},
@@ -387,9 +386,6 @@ class Confirm extends PureComponent {
       const gasSelected = gasEstimateTypeChanged
         ? AppConstants.GAS_OPTIONS.MEDIUM
         : this.state.gasSelected;
-      // const gasSelectedTemp = gasEstimateTypeChanged
-      //   ? AppConstants.GAS_OPTIONS.MEDIUM
-      //   : this.state.gasSelectedTemp;
 
       if (
         (!this.state.stopUpdateGas && !this.state.advancedGasInserted) ||
@@ -402,7 +398,6 @@ class Confirm extends PureComponent {
               gasEstimationReady: true,
               animateOnChange: true,
               gasSelected,
-              // gasSelectedTemp,
             },
             () => {
               this.setState({ animateOnChange: false });
@@ -416,7 +411,6 @@ class Confirm extends PureComponent {
               gasEstimationReady: true,
               animateOnChange: true,
               gasSelected,
-              // gasSelectedTemp,
             },
             () => {
               this.setState({ animateOnChange: false });
@@ -989,8 +983,8 @@ class Confirm extends PureComponent {
               gasSelected={gasSelected}
               animateOnChange={animateOnChange}
               isAnimating={isAnimating}
-              legacyGasObj={legacyGasObject}
-              EIP1559GasObj={EIP1559GasObject}
+              legacyGasData={legacyGasObject}
+              EIP1559GasData={EIP1559GasObject}
               EIP1559GasTxn={EIP1559GasTransaction}
               onlyGas={false}
               validateAmount={this.validateAmount}
