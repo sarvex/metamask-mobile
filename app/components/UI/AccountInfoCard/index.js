@@ -174,7 +174,7 @@ class AccountInfoCard extends PureComponent {
       currentCurrency,
       2,
     )?.toUpperCase();
-    return operation === 'signing' ? (
+    return operation === 'signing' && transaction !== undefined ? (
       <ApproveTransactionHeader
         origin={transaction.origin}
         url={activeTabUrl}

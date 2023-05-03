@@ -492,6 +492,27 @@ exports[`Root should match snapshot 1`] = `
                           )
                         </Text>
                       </View>
+                      <Text
+                        numberOfLines={1}
+                        style={
+                          Array [
+                            Object {
+                              "alignSelf": "flex-start",
+                              "color": "#24272A",
+                              "fontFamily": "EuclidCircularB-Regular",
+                              "fontSize": 14,
+                              "fontWeight": "100",
+                            },
+                            undefined,
+                          ]
+                        }
+                      >
+                        Balance:
+                         
+                        $0.00
+                         
+                        (0 ETH)
+                      </Text>
                     </View>
                   </View>
                 </View>
