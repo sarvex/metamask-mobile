@@ -95,6 +95,8 @@ const RootRPCMethodsUI = (props) => {
   const setEtherTransaction = props.setEtherTransaction;
   const QRState = props.QRState;
   const isSigningQRObject = props.isSigningQRObject;
+  const approveModalVisible = props.approveModalVisible;
+  const dappTransactionModalVisible = props.dappTransactionModalVisible;
 
   // Reject pending approval using MetaMask SDK.
   const rejectPendingApproval = (id, error) => {
@@ -394,11 +396,9 @@ const RootRPCMethodsUI = (props) => {
   };
 
   const renderQRSigningModal = () => {
-    const { QRState, approveModalVisible, dappTransactionModalVisible } = props;
-    const shouldRenderThisModal =
-      !approveModalVisible && !dappTransactionModalVisible;
+    const { QRState } = props;
     return (
-      shouldRenderThisModal && (
+      showPendingApproval && (
         <QRSigningModal
           isVisible={showPendingApproval?.type === ApprovalTypes.QR_SIGNING}
           QRState={QRState}
@@ -725,7 +725,11 @@ const RootRPCMethodsUI = (props) => {
 
   useEffect(() => {
     async function checkAndAddQRSigningApproval() {
-      if (isSigningQRObject) {
+      if (
+        isSigningQRObject &&
+        !approveModalVisible &&
+        !dappTransactionModalVisible
+      ) {
         const { ApprovalController } = Engine.context;
         try {
           await ApprovalController.add({
@@ -740,7 +744,12 @@ const RootRPCMethodsUI = (props) => {
       }
     }
     checkAndAddQRSigningApproval();
-  }, [QRState, isSigningQRObject]);
+  }, [
+    QRState,
+    approveModalVisible,
+    dappTransactionModalVisible,
+    isSigningQRObject,
+  ]);
 
   useEffect(() => {
     initializeWalletConnect();
